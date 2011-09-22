@@ -1,0 +1,75 @@
+#!/usr/bin/php
+<?php
+
+// USER CONFIG
+define("USERNAME","seppi");
+define("SERVER","localhost");
+define("REPODIR","~/IncogRepoStorage/");
+
+// ADVANCED CONFIG
+define("TEMP","~/.incogrepo/");
+define("INDEX_NAME","index");
+define("FILE_NAME","%s_%s.tgz");
+define("ARCHIVE","tar -czvf ".TEMP."%s %s");
+define("UNARCHIVE","tar -xzvf ".TEMP."%s %s");
+define("PULL","scp ".USERNAME."@".SERVER.":".REPODIR."%s ".TEMP."%s");
+define("PULL_MULTIPLE","scp ".USERNAME."@".SERVER.":\"%s\" ".TEMP);
+define("PUSH","scp ".TEMP."%s ".USERNAME."@".SERVER.":".REPODIR."%s");
+// OK, STOP CONFIG'IN!
+error_reporting(-1);
+$index = sprintf(PULL,INDEX_NAME,INDEX_NAME);
+echo $index."\n";
+passthru($index);
+$command = "cat ".TEMP.INDEX_NAME;
+$index_raw = `$command`;
+$index_data = @unserialize($index_raw);
+if($index_data){
+  echo "Repo has ".count($index_data)." files.\n";
+  $to_download = array();
+  foreach($index_data as $file){
+    if(!file_exists(TEMP.$file)){
+      echo TEMP."$file does not exist.\n";
+      $to_download[] = REPODIR.$file;
+    }
+  }
+  print_r($to_download);
+  echo "Repo needs to download ".count($to_download)." commits.\n";
+  $command = sprintf(PULL_MULTIPLE,implode(" ",$to_download));
+  echo "$command\n";
+  //passthru($command);
+}
+$opt = getopt(null,array("timestamp:"));
+if(in_array(@$argv[1],array("checkin","ci"))){
+  $time = time();
+  $project = project_exists($argv[2]);
+  $filename = sprintf(FILE_NAME,rtrim($project,"/"),$time);
+  $archive = sprintf(ARCHIVE,$filename,$project);
+  echo "$archive\n";
+  passthru($archive);
+  $push = sprintf(PUSH,$filename,$filename);
+  echo "$push\n";
+  passthru($push);
+} elseif(in_array(@$argv[1],array("checkout","co"))){
+  
+} elseif(in_array(@$argv[1],array("status","st"))){
+
+} else {
+
+}
+
+function project_exists($project){
+  if(!isset($project)){
+    die("Error: No project name supplied.\n");
+  }
+  if(substr($project,-1,1)!="/"){
+    $project .= "/";
+  }
+  if(in_array(@$project,explode("\n",trim(`ls -d */`)))){
+    return $project;
+  } else {
+    die("Error: Supplied project name does not exist.\n");
+  }
+}
+
+?>
+
