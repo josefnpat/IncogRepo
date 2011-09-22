@@ -1,27 +1,29 @@
-         __   __   __   __   ___  __   __  
+ .       __   __   __   __   ___  __   __  
  | |\ | /  ` /  \ / _` |__) |__  |__) /  \ 
- | | \| \__, \__/ \__> |  \ |___ |    \__/ 
+ | | \| \__, \__/ \__| |  \ |___ |    \__/ 
                                           
 A Personal Revision Control System
 
-Outline:
-  User Config:
-    username <server username>
-    server <server address>
-    repodir <remote server directory for storage>
-  System Config:
-    archive = "tar cvf %filename%.tar.gz";
-    protocol = "ssh %username%@%server%/%repodir%";//scp?
-  Commands:
-    incogrepo --checkin <directory> [-f|--force]
-    incogrepo -ci <directory>
-      Takes time down. If archive exists, say so.
-      If there is a newer project, say so and quit.
-    incogrepo --checkout <project> [-f|--force]
-    incogrepo -co <project>
-      Downloads newest project time, and untars the folder.
-    incogrepo --log <project>
-    incogrepi -l <project>
-      Show list of commits recently made for project
-  Internal:
-    filename = %projectname%_%time%
+Commands:
+  incogrepo [checkin|ci] <directory>
+    Takes time down. If archive exists, say so.
+    If there is a newer project, say so and quit.
+  incogrepo [checkout|co] <project> [--timestamp <archive time>] //checkout
+    Downloads newest project time, and untars the folder. (unless archive time requested)
+  incogrepi [status|st] <project>
+    Show info for the project
+Internal:
+  filename = %projectname%_%time%
+  ./.incogrepo ..  Stores downloaded data.
+  
+Linux Dependencies:
+  tar
+  cp
+  scp
+  ls
+  cat
+  
+Folders that need to exist:
+  Local: ~/.incogrepo/
+  Remove: ~/IncogRepoStorage/
+  
