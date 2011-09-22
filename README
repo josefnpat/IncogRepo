@@ -12,16 +12,9 @@ Commands:
     Downloads newest project time, and untars the folder. (unless archive time requested)
   incogrepi [status|st] <project>
     Show info for the project
-Internal:
-  filename = %projectname%_%time%
-  ./.incogrepo ..  Stores downloaded data.
   
 Linux Dependencies:
-  tar
-  cp
-  scp
-  ls
-  cat
+  tar, cp, scp, ls, cat
   
 Folders that need to exist:
   Local: ~/.incogrepo/
