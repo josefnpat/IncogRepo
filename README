@@ -12,7 +12,8 @@ Commands:
     Downloads newest project time, and untars the folder. (unless archive time requested)
   incogrepi [status|st] <project>
     Show info for the project
-  
+  incogrepi [update|up]
+    Updates the local repository
 Linux Dependencies:
   tar, cp, scp, ls, cat
   

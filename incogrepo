@@ -4,10 +4,10 @@
 // USER CONFIG
 define("USERNAME","seppi");
 define("SERVER","localhost");
-define("REPODIR","~/IncogRepoStorage/");
+define("REPODIR","/home/seppi/IncogRepoStorage/");
 
 // ADVANCED CONFIG
-define("TEMP","~/.incogrepo/");
+define("TEMP","/home/seppi/.incogrepo/");
 define("INDEX_NAME","index");
 define("FILE_NAME","%s_%s.tgz");
 define("ARCHIVE","tar -czvf ".TEMP."%s %s");
@@ -17,42 +17,23 @@ define("PULL_MULTIPLE","scp ".USERNAME."@".SERVER.":\"%s\" ".TEMP);
 define("PUSH","scp ".TEMP."%s ".USERNAME."@".SERVER.":".REPODIR."%s");
 // OK, STOP CONFIG'IN!
 error_reporting(-1);
-$index = sprintf(PULL,INDEX_NAME,INDEX_NAME);
-echo $index."\n";
-passthru($index);
-$command = "cat ".TEMP.INDEX_NAME;
-$index_raw = `$command`;
-$index_data = @unserialize($index_raw);
-if($index_data){
-  echo "Repo has ".count($index_data)." files.\n";
-  $to_download = array();
-  foreach($index_data as $file){
-    if(!file_exists(TEMP.$file)){
-      echo TEMP."$file does not exist.\n";
-      $to_download[] = REPODIR.$file;
-    }
-  }
-  print_r($to_download);
-  echo "Repo needs to download ".count($to_download)." commits.\n";
-  $command = sprintf(PULL_MULTIPLE,implode(" ",$to_download));
-  echo "$command\n";
-  //passthru($command);
-}
-$opt = getopt(null,array("timestamp:"));
+$opt = getopt(null,array("timestamp:","noupdate::"));
+update_index();
 if(in_array(@$argv[1],array("checkin","ci"))){
   $time = time();
   $project = project_exists($argv[2]);
   $filename = sprintf(FILE_NAME,rtrim($project,"/"),$time);
   $archive = sprintf(ARCHIVE,$filename,$project);
-  echo "$archive\n";
+  echo "Archiving Project.\n";
+  //echo "$archive\n";
   passthru($archive);
   $push = sprintf(PUSH,$filename,$filename);
-  echo "$push\n";
+  //echo "$push\n";
+  echo "Checking in archive.\n";
   passthru($push);
 } elseif(in_array(@$argv[1],array("checkout","co"))){
-  
 } elseif(in_array(@$argv[1],array("status","st"))){
-
+} elseif(in_array(@$argv[1],array("update","up"))){
 } else {
 
 }
@@ -71,5 +52,30 @@ function project_exists($project){
   }
 }
 
+function update_index(){
+  // Get newest index
+  $index = sprintf(PULL,INDEX_NAME,INDEX_NAME);
+  //echo $index."\n";
+  echo "Downloading index file.\n";
+  passthru($index);
+  // Update repo
+  $index_raw = file_get_contents(TEMP.INDEX_NAME);
+  $index_data = @unserialize($index_raw);
+  if($index_data){
+    echo "Repo has ".count($index_data)." files.\n";
+    $to_download = array();
+    foreach($index_data as $file){
+      if(!file_exists(TEMP.$file)){
+        echo TEMP."$file does not exist.\n";
+        $to_download[] = REPODIR.$file;
+      }
+    }
+    $command = sprintf(PULL_MULTIPLE,implode(" ",$to_download));
+    echo "Repo needs to download ".count($to_download)." commits.\n";
+    if(count($to_download)){
+      //echo "$command\n";
+      passthru($command);
+    }
+  }
+}
 ?>
-
