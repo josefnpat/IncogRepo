@@ -1,41 +1,135 @@
 #!/usr/bin/php
 <?php
 
-// USER CONFIG
-define("USERNAME","seppi");
-define("SERVER","localhost");
-define("REPODIR","/home/seppi/IncogRepoStorage/");
-
-// ADVANCED CONFIG
-define("TEMP","/home/seppi/.incogrepo/");
+// USER CONFIGURATION
+define("USERNAME","seppi"); // Your ssh server username.
+define("SERVER","localhost"); // Your ssh server address.
+define("REMOTEDIR","/home/seppi/IncogRepoStorage/"); // Remote location for data.
+define("TEMP","/home/seppi/.incogrepo/"); // Local location for data.
+/* ,___,
+   [ o.o]   And that's it! 
+   /)__)    Be sure to run `incogrepo serverinit`!
+ --''--''--
+*/
+// ADVANCED CONFIGURATION
 define("INDEX_NAME","index");
 define("FILE_NAME","%s_%s.tgz");
 define("ARCHIVE","tar -czvf ".TEMP."%s %s");
-define("UNARCHIVE","tar -xzvf ".TEMP."%s %s");
-define("PULL","scp ".USERNAME."@".SERVER.":".REPODIR."%s ".TEMP."%s");
+define("UNARCHIVE","tar -xzvf ".TEMP."%s");
+define("PULL","scp ".USERNAME."@".SERVER.":".REMOTEDIR."%s ".TEMP."%s");
 define("PULL_MULTIPLE","scp ".USERNAME."@".SERVER.":\"%s\" ".TEMP);
-define("PUSH","scp ".TEMP."%s ".USERNAME."@".SERVER.":".REPODIR."%s");
-// OK, STOP CONFIG'IN!
-error_reporting(-1);
-$opt = getopt(null,array("timestamp:","noupdate::"));
-update_index();
+define("PUSH","scp ".TEMP."%s ".USERNAME."@".SERVER.":".REMOTEDIR."%s");
+define("PUSH_MULTIPLE","scp %s ".USERNAME."@".SERVER.":".REMOTEDIR);
+
+error_reporting(-1); // Feels good man.
+
+if(!file_exists(TEMP)){
+  $mkdir = "mkdir ".TEMP;
+  //echo "$mkdir\n";
+  passthru($mkdir);
+  if(!file_exists(TEMP)){
+    die(TEMP." cannot be made.");
+  }
+}
+
+// Main operand handler.
 if(in_array(@$argv[1],array("checkin","ci"))){
-  $time = time();
-  $project = project_exists($argv[2]);
+  $index_info = update_index(); // force to make sure the user doesn't lose code.
+  if($index_info['new_commits']){
+    if(!i_demand_a_response("New commits detected. Continue check in?")){
+      die("Error: check in cancelled.\n");
+    }
+  }
+  $time = time();//Make sure it's a static time.
+  
+  $project = project_exists(@$argv[2]);
   $filename = sprintf(FILE_NAME,rtrim($project,"/"),$time);
+  
   $archive = sprintf(ARCHIVE,$filename,$project);
-  echo "Archiving Project.\n";
+  echo "Archiving Project...\n";
   //echo "$archive\n";
   passthru($archive);
-  $push = sprintf(PUSH,$filename,$filename);
-  //echo "$push\n";
-  echo "Checking in archive.\n";
-  passthru($push);
+  
+  $index = get_index();
+  $index[] = $filename;
+  set_index($index);
+  
+  $push_all = sprintf(PUSH_MULTIPLE,TEMP.$filename." ".TEMP.INDEX_NAME);
+  //echo "$push_all\n";
+  echo "Checking in archive...\n";
+  passthru($push_all);
+  
+  echo "Check in complete...\n";
 } elseif(in_array(@$argv[1],array("checkout","co"))){
+  $project = @$argv[2];
+  if(file_exists($project)){
+    die("Error: Project exists. Delete or rename current project to checkout.\n");
+  }
+  ask_update_index();
+  $index_data = get_index();
+  
+  // Pull apart the data and find the newest repo.
+  if(isset($argv[3])){
+    $newest = $argv[3];
+  } else {
+    $newest = 0;
+    foreach($index_data as $file){
+      $temp = explode("_",$file);
+      $temp_project = $temp[0];
+      if($temp_project == $project){
+        $temp = explode(".",$temp[1]);
+        $temp_time = $temp[0];
+        if($newest < $temp_time){
+          $newest = $temp_time;
+        }
+      }
+    }
+  }
+  
+  $filename = sprintf(FILE_NAME,$project,$newest);
+  if(!file_exists(TEMP.$filename)){
+    die("Error: File ".TEMP."$filename does not exist.\n");
+  }
+  
+  $unarchive = sprintf(UNARCHIVE,$filename);
+  echo "Unarchiving Project...\n";
+  //echo "$unarchive\n";
+  passthru($unarchive);
+  
+  echo "Check out complete.\n";
 } elseif(in_array(@$argv[1],array("status","st"))){
-} elseif(in_array(@$argv[1],array("update","up"))){
+  ask_update_index();
+  $data = get_index();
+  foreach($data as $line){
+    $temp = explode("_",$line);
+    $temp_project = $temp[0];
+    $temp = explode(".",$temp[1]);
+    $temp_time = $temp[0];
+    echo "$temp_project : ".date(DATE_RFC822,$temp_time)." [$temp_time]\n";
+  }
+} elseif(in_array(@$argv[1],array("serverinit","si"))){
+  if(i_demand_a_response("Initialize both local and remote repository?")){
+    echo "Initializing local repository...\n";
+    set_index(array());
+    $push = sprintf(PUSH_MULTIPLE,TEMP.INDEX_NAME);//TODO TEST THIS OH GOD YES PLZ CORT!!!
+    //echo "$push\n";
+    echo "Initializing remote repository...\n";
+    passthru($push);
+  } else {
+    die("Error: server init cancelled.\n");
+  }
+  ask_update_index();
+  $data = get_index();
+  
 } else {
-
+  echo "Usage: incogrepo [OPERANDS]
+Operands:
+  checkin|ci <project>
+  checkout|co <project> [timestamp]
+  status|st <project>
+  serverinit|si
+See README for more information.
+";
 }
 
 function project_exists($project){
@@ -52,30 +146,78 @@ function project_exists($project){
   }
 }
 
+function ask_update_index(){
+  if(i_demand_a_response("Check for new commits?")){
+    return update_index();
+  } else {
+    echo "Skipping update.\n";
+  }
+}
+function i_demand_a_response($prompt){
+  do {
+    $yn = " [y|n]:";
+    if(function_exists("readline")){
+      $input = readline($prompt.$yn);
+      readline_add_history(trim($input));
+    } else {
+      echo $prompt.$yn;
+      $input = fgets(STDIN);
+    }
+    if(strtolower(substr($input,0,1))=="y"){
+      return TRUE;
+    } elseif(strtolower(substr($input,0,1))=="n"){
+      return FALSE;
+    }
+  } while (TRUE);
+}
 function update_index(){
+  $index_info = array("new_commits"=>FALSE);
   // Get newest index
   $index = sprintf(PULL,INDEX_NAME,INDEX_NAME);
   //echo $index."\n";
-  echo "Downloading index file.\n";
+  echo "Downloading newest commits...\n";
   passthru($index);
-  // Update repo
-  $index_raw = file_get_contents(TEMP.INDEX_NAME);
-  $index_data = @unserialize($index_raw);
-  if($index_data){
-    echo "Repo has ".count($index_data)." files.\n";
-    $to_download = array();
-    foreach($index_data as $file){
-      if(!file_exists(TEMP.$file)){
-        echo TEMP."$file does not exist.\n";
-        $to_download[] = REPODIR.$file;
-      }
+  // Update Repository
+  $index_data = get_index();
+  echo "Repository has ".count($index_data)." commits...\n";
+  $to_download = array();
+  foreach($index_data as $file){
+    if(!file_exists(TEMP.$file)){
+      echo TEMP."$file does not exist...\n";
+      $to_download[] = REMOTEDIR.$file;
     }
-    $command = sprintf(PULL_MULTIPLE,implode(" ",$to_download));
-    echo "Repo needs to download ".count($to_download)." commits.\n";
-    if(count($to_download)){
+  }
+  $command = sprintf(PULL_MULTIPLE,implode(" ",$to_download));
+  echo "Repository needs to download ".count($to_download)." commits...\n";
+  if(count($to_download)){
+    $index_info['new_commits'] = TRUE;
+    if(i_demand_a_response("New commits found. Download commits?")){
       //echo "$command\n";
       passthru($command);
+      echo "Repository updated.\n";
+    } else {
+      echo "Repository not updated.\n";
     }
+  }
+  return $index_info;
+}
+function get_index(){
+  $index_raw = @file_get_contents(TEMP.INDEX_NAME);
+  if($index_raw === FALSE){
+    $index_data = array();
+  } else {
+    $index_data = @unserialize($index_raw);
+  }
+  if(is_array($index_data)){
+    return $index_data;
+  } else {
+    die("Error: Repository could not be deciphered.\nIf this is a new repository, use incogrepo <serverinit|si>.\n");
+  }
+}
+function set_index($data){
+  $r = file_put_contents(TEMP.INDEX_NAME,serialize($data));
+  if($r === FALSE){
+    die("Error: Repository could not be updated.\n");
   }
 }
 ?>
