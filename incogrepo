@@ -21,8 +21,10 @@ define("PULL_MULTIPLE","scp ".USERNAME."@".SERVER.":\"%s\" ".TEMP);
 define("PUSH","scp ".TEMP."%s ".USERNAME."@".SERVER.":".REMOTEDIR."%s");
 define("PUSH_MULTIPLE","scp %s ".USERNAME."@".SERVER.":".REMOTEDIR);
 
+// MAIN CODE
 error_reporting(-1); // Feels good man.
 
+// Make sure the temp directory exists.
 if(!file_exists(TEMP)){
   $mkdir = "mkdir ".TEMP;
   //echo "$mkdir\n";
@@ -111,7 +113,7 @@ if(in_array(@$argv[1],array("checkin","ci"))){
   if(i_demand_a_response("Initialize both local and remote repository?")){
     echo "Initializing local repository...\n";
     set_index(array());
-    $push = sprintf(PUSH_MULTIPLE,TEMP.INDEX_NAME);//TODO TEST THIS OH GOD YES PLZ CORT!!!
+    $push = sprintf(PUSH_MULTIPLE,TEMP.INDEX_NAME);
     //echo "$push\n";
     echo "Initializing remote repository...\n";
     passthru($push);
@@ -120,7 +122,6 @@ if(in_array(@$argv[1],array("checkin","ci"))){
   }
   ask_update_index();
   $data = get_index();
-  
 } else {
   echo "Usage: incogrepo [OPERANDS]
 Operands:
@@ -131,7 +132,7 @@ Operands:
 See README for more information.
 ";
 }
-
+// Check if the project exists where the user claims it exists.
 function project_exists($project){
   if(!isset($project)){
     die("Error: No project name supplied.\n");
@@ -145,7 +146,7 @@ function project_exists($project){
     die("Error: Supplied project name does not exist.\n");
   }
 }
-
+// Ask nicely if the user wants to update.
 function ask_update_index(){
   if(i_demand_a_response("Check for new commits?")){
     return update_index();
@@ -153,6 +154,7 @@ function ask_update_index(){
     echo "Skipping update.\n";
   }
 }
+// This function demands a yes or a no, unless the user breaks (ctrl c|x) the program.
 function i_demand_a_response($prompt){
   do {
     $yn = " [y|n]:";
@@ -170,6 +172,7 @@ function i_demand_a_response($prompt){
     }
   } while (TRUE);
 }
+// Updates the index file.
 function update_index(){
   $index_info = array("new_commits"=>FALSE);
   // Get newest index
@@ -201,6 +204,7 @@ function update_index(){
   }
   return $index_info;
 }
+// Returns the index file.
 function get_index(){
   $index_raw = @file_get_contents(TEMP.INDEX_NAME);
   if($index_raw === FALSE){
@@ -214,6 +218,7 @@ function get_index(){
     die("Error: Repository could not be deciphered.\nIf this is a new repository, use incogrepo <serverinit|si>.\n");
   }
 }
+// Sets the infex file.
 function set_index($data){
   $r = file_put_contents(TEMP.INDEX_NAME,serialize($data));
   if($r === FALSE){
