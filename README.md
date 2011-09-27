@@ -1,9 +1,6 @@
-     .       __   __   __   __   ___  __   __  
-     | |\ | /  ` /  \ / _` |__) |__  |__) /  \ 
-     | | \| \__, \__/ \__| |  \ |___ |    \__/ 
-                                          
-A Personal Revision Control System for Linux
+IncogRepo
 ============================================
+*A Personal Revision Control System for Linux*
 
 IncogRepo Is For
 ----------------
@@ -20,8 +17,8 @@ Requirements
 ------------
   php, tar, coreutils, ssh
 
-SETUP / INSTALLATION
---------------------
+Setup
+-----
 1. Download `incogrepo` and put it in the same directory as where your project folders are.
 2. Open `incogrepo` with your favorite editor, and edit the `User Configuration` section.
 3. Run `incogrepo serverinit
@@ -40,14 +37,14 @@ Technical Requirements
 
 Operands
 --------
-* `checkin|ci <project>`
+* `checkin|ci <project>`  
     Archive the project and check it in to the repository.
-* `checkout|co <project> [timestamp]`
+* `checkout|co <project> [timestamp]`  
     Check out the project, and unarchive the project to the working directory.
     Adding the timestamp flag will unarchive a repository with a specific timestamp. Use status to find previous project's timestamps.
-* `status|st <project>`
+* `status|st <project>`  
     See the status of the current repository.
-* `serverinit|si`
+* `serverinit|si`  
     Initializes the local and remote repository.
     
 Tutorial
@@ -68,7 +65,7 @@ seppi@remote:~$ exit
 logout
 Connection to remote closed.
 </pre>
-The remote repository is Initialized.
+The remote repository is initialized.
 <pre>
 seppi@home:~/IncogRepo$ ./incogrepo serverinit
 Initialize both local and remote repository? [y|n]:y
