@@ -1,6 +1,6 @@
- .       __   __   __   __   ___  __   __  
- | |\ | /  ` /  \ / _` |__) |__  |__) /  \ 
- | | \| \__, \__/ \__| |  \ |___ |    \__/ 
+     .       __   __   __   __   ___  __   __  
+     | |\ | /  ` /  \ / _` |__) |__  |__) /  \ 
+     | | \| \__, \__/ \__| |  \ |___ |    \__/ 
                                           
 A Personal Revision Control System for Linux
 ============================================
@@ -56,67 +56,66 @@ TUTORIAL
 For those who learn best by example; here is a quick annotated interactive session.
 
 Configure IncogRepo.
-    seppi@home:~/IncogRepo$ nano incogrepo
+    `seppi@home:~/IncogRepo$ nano incogrepo`
 Move over to the remote server and make storage space for the repository.
-    seppi@home:~/IncogRepo$ ssh seppi@remote
-    seppi@remote's password: 
-    Welcome to Ubuntu 11.04 (GNU/Linux 2.6.38-11-generic x86_64)
-    seppi@remote:~$ mkdir IncogRepoStorage
-    seppi@remote:~$ exit
-    logout
-    Connection to remote closed.
+    `seppi@home:~/IncogRepo$ ssh seppi@remote`
+    `seppi@remote's password: `
+    `Welcome to Ubuntu 11.04 (GNU/Linux 2.6.38-11-generic x86_64)`
+    `seppi@remote:~$ mkdir IncogRepoStorage`
+    `seppi@remote:~$ exit`
+    `logout`
+    `Connection to remote closed.`
 The remote repository is Initialized.
-    seppi@home:~/IncogRepo$ ./incogrepo serverinit
-    Initialize both local and remote repository? [y|n]:y
-    Initializing local repository...
-    Initializing remote repository...
-    seppi@localhost's password: 
-    Check for new commits? [y|n]:n
-    Skipping update.
+    `seppi@home:~/IncogRepo$ ./incogrepo serverinit`
+    `Initialize both local and remote repository? [y|n]:y`
+    `Initializing local repository...`
+    `Initializing remote repository...`
+    `seppi@localhost's password: `
+    `Check for new commits? [y|n]:n`
+    `Skipping update.`
 Our project, which is named `test` is checked in.
-    seppi@home:~/IncogRepo$ ls
-    incogrepo  README  test
-    seppi@home:~/IncogRepo$ ./incogrepo checkin test/
-    Downloading newest commits...
-    seppi@localhost's password: 
-    Repository has 0 commits...
-    Repository needs to download 0 commits...
-    Archiving Project...
-    test/
-    test/wat.php
-    test/README
-    test/index.html
-    Checking in archive...
-    seppi@localhost's password: 
-    Check in complete...
+    `seppi@home:~/IncogRepo$ ls`
+    `incogrepo  README  test`
+    `seppi@home:~/IncogRepo$ ./incogrepo checkin test/`
+    `Downloading newest commits...`
+    `seppi@localhost's password: `
+    `Repository has 0 commits...`
+    `Repository needs to download 0 commits...`
+    `Archiving Project...`
+    `test/`
+    `test/wat.php`
+    `test/README`
+    `test/index.html`
+    `Checking in archive...`
+    `seppi@localhost's password: `
+    `Check in complete...`
 The local repository is deleted to emulate a different computer with the same configuration.
-    seppi@home:~/IncogRepo$ rm ~/.incogrepo/ -rf
+    `seppi@home:~/IncogRepo$ rm ~/.incogrepo/ -rf`
 The project `test` is checked out.
-    seppi@home:~/IncogRepo$ ./incogrepo checkout test
-    Check for new commits? [y|n]:y
-    Downloading newest commits...
-    seppi@localhost's password: 
-    Repository has 1 commits...
-    /home/seppi/.incogrepo/test_1317087269.tgz does not exist...
-    Repository needs to download 1 commits...
-    New commits found. Download commits? [y|n]:y
-    seppi@localhost's password: 
-    Repository updated.
-    Unarchiving Project...
-    test/
-    test/wat.php
-    test/README
-    test/index.html
-    Check out complete.
+    `seppi@home:~/IncogRepo$ ./incogrepo checkout test`
+    `Check for new commits? [y|n]:y`
+    `Downloading newest commits...`
+    `seppi@localhost's password: `
+    `Repository has 1 commits...`
+    `/home/seppi/.incogrepo/test_1317087269.tgz does not exist...`
+    `Repository needs to download 1 commits...`
+    `New commits found. Download commits? [y|n]:y`
+    `seppi@localhost's password: `
+    `Repository updated.`
+    `Unarchiving Project...`
+    `test/`
+    `test/wat.php`
+    `test/README`
+    `test/index.html`
+    `Check out complete.`
 Project `test` has been successfully checked out.
-    seppi@home:~/IncogRepo$ ls *
-    incogrepo  README
-
-    test:
-    index.html  README  wat.php
+    `seppi@home:~/IncogRepo$ ls *`
+    `incogrepo  README`
+    `test:`
+    `index.html  README  wat.php`
 Status shows us that the `test` project did commit.
-    seppi@home:~/IncogRepo$ ./incogrepo status
-    Check for new commits? [y|n]:n
-    Skipping update.
-    test : Mon, 26 Sep 11 21:34:29 -0400 [1317087269]
+    `seppi@home:~/IncogRepo$ ./incogrepo status`
+    `Check for new commits? [y|n]:n`
+    `Skipping update.`
+    `test : Mon, 26 Sep 11 21:34:29 -0400 [1317087269]`
 
