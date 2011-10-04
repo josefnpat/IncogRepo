@@ -21,7 +21,7 @@ Setup
 -----
 1. Download `incogrepo` and put it in the same directory as where your project folders are.
 2. Open `incogrepo` with your favorite editor, and edit the `User Configuration` section.
-3. Run `incogrepo serverinit
+3. Start committing!
 
 Author
 ------

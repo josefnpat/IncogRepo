@@ -8,11 +8,12 @@ define("REMOTEDIR","/home/seppi/IncogRepoStorage/"); // Remote location for data
 define("TEMP","/home/seppi/.incogrepo/"); // Local location for data.
 /* ,___,
    [ o.o]   And that's it! 
-   /)__)    Be sure to run `incogrepo serverinit`!
+   /)__)    
  --''--''--
 */
 // ADVANCED CONFIGURATION
 define("INDEX_NAME","index");
+define("INFO_NAME","info");
 define("FILE_NAME","%s_%s.tgz");
 define("ARCHIVE","tar -czvf ".TEMP."%s %s");
 define("UNARCHIVE","tar -xzvf ".TEMP."%s");
@@ -37,14 +38,30 @@ if(!file_exists(TEMP)){
 // Main operand handler.
 if(in_array(@$argv[1],array("checkin","ci"))){
   $index_info = update_index(); // force to make sure the user doesn't lose code.
+  $time = time();//Make sure it's a static time.
+  $project = project_exists(@$argv[2]);
+  if(substr($project,-1,1)=="/"){
+    $project = substr($project,0,strlen($project)-1);
+  }
+  $info = get_info();
+  $index_data = get_index();
+  $newest = find_newest($index_data,$project);
+  $valid_checkin = true;
+  if(array_key_exists(rtrim($project),$info->co)){
+    $last_checkout = $info->co[$project];
+    if($last_checkout < $newest){
+      $valid_checkin = false;
+    }
+  }
+  if(!$valid_checkin){
+    die("Error: Server has newer commit. Check out first.\n");
+  }
   if($index_info['new_commits']){
     if(!i_demand_a_response("New commits detected. Continue check in?")){
       die("Error: check in cancelled.\n");
     }
   }
-  $time = time();//Make sure it's a static time.
   
-  $project = project_exists(@$argv[2]);
   $filename = sprintf(FILE_NAME,rtrim($project,"/"),$time);
   
   $archive = sprintf(ARCHIVE,$filename,$project);
@@ -61,6 +78,10 @@ if(in_array(@$argv[1],array("checkin","ci"))){
   echo "Checking in archive...\n";
   passthru($push_all);
   
+  $info = get_info();
+  $info->co[$project] = $time;
+  set_info($info);
+  
   echo "Check in complete...\n";
 } elseif(in_array(@$argv[1],array("checkout","co"))){
   $project = @$argv[2];
@@ -74,18 +95,7 @@ if(in_array(@$argv[1],array("checkin","ci"))){
   if(isset($argv[3])){
     $newest = $argv[3];
   } else {
-    $newest = 0;
-    foreach($index_data as $file){
-      $temp = explode("_",$file);
-      $temp_project = $temp[0];
-      if($temp_project == $project){
-        $temp = explode(".",$temp[1]);
-        $temp_time = $temp[0];
-        if($newest < $temp_time){
-          $newest = $temp_time;
-        }
-      }
-    }
+    $newest = find_newest($index_data,$project);
   }
   
   $filename = sprintf(FILE_NAME,$project,$newest);
@@ -97,6 +107,10 @@ if(in_array(@$argv[1],array("checkin","ci"))){
   echo "Unarchiving Project...\n";
   //echo "$unarchive\n";
   passthru($unarchive);
+  
+  $info = get_info();
+  $info->co[$project] = $newest;
+  set_info($info);
   
   echo "Check out complete.\n";
 } elseif(in_array(@$argv[1],array("status","st"))){
@@ -113,6 +127,9 @@ if(in_array(@$argv[1],array("checkin","ci"))){
   if(i_demand_a_response("Initialize both local and remote repository?")){
     echo "Initializing local repository...\n";
     set_index(array());
+    $info = new stdClass();
+    $info->co = array();
+    set_info($info);
     $push = sprintf(PUSH_MULTIPLE,TEMP.INDEX_NAME);
     //echo "$push\n";
     echo "Initializing remote repository...\n";
@@ -215,14 +232,52 @@ function get_index(){
   if(is_array($index_data)){
     return $index_data;
   } else {
-    die("Error: Repository could not be deciphered.\nIf this is a new repository, use incogrepo <serverinit|si>.\n");
+    die("Error: Repository (".INDEX_NAME.") could not be deciphered.\nIf this is a new repository, use incogrepo <serverinit|si>.\n");
   }
 }
 // Sets the infex file.
 function set_index($data){
   $r = file_put_contents(TEMP.INDEX_NAME,serialize($data));
   if($r === FALSE){
-    die("Error: Repository could not be updated.\n");
+    die("Error: Repository (".INDEX_NAME.") could not be updated.\n");
   }
+}
+
+// Returns the info file.
+function get_info(){
+  $info_raw = @file_get_contents(TEMP.INFO_NAME);
+  if($info_raw === FALSE){
+    $info_data = new stdClass();
+    $info_data->co = array();
+  } else {
+    $info_data = @unserialize($info_raw);
+  }
+  if(is_object($info_data)){
+    return $info_data;
+  } else {
+    die("Error: Repository (".INFO_NAME.") could not be deciphered.\nIf this is a new repository, use incogrepo <serverinit|si>.\n");
+  }
+}
+// Sets the infex file.
+function set_info($data){
+  $r = file_put_contents(TEMP.INFO_NAME,serialize($data));
+  if($r === FALSE){
+    die("Error: Repository (".INFO_NAME.") could not be updated.\n");
+  }
+}
+function find_newest($index_data,$project){
+  $newest = 0;
+  foreach($index_data as $file){
+    $temp = explode("_",$file);
+    $temp_project = $temp[0];
+    if($temp_project == $project){
+      $temp = explode(".",$temp[1]);
+      $temp_time = $temp[0];
+      if($newest < $temp_time){
+        $newest = $temp_time;
+      }
+    }
+  }
+  return $newest;
 }
 ?>
