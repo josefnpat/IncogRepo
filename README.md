@@ -26,7 +26,6 @@ Setup
 Author
 ------
 Josef Patoprsty (Seppi)
-Contact: josefnpat at gmail.com
 
 Technical Requirements
 ----------------------
